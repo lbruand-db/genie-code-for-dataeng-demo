@@ -11,14 +11,13 @@ pipelines correctly without having to re-derive the data model from scratch.
 
 ## Catalog structure
 
-All data lives in the `brickvault` catalog.
+All data lives in `lucasbruand_catalog.brickvault`.
 
-| Schema | Purpose |
-|--------|---------|
-| `catalog` | Cleaned source tables (sets, themes, parts, colors, inventories) |
-| `features` | Feature tables for ML models |
-| `metrics` | Certified business metric views — prefer these over raw columns |
-| `landing` | Raw CSVs in the `raw` Volume — do not query directly |
+| Object type | Name pattern | Purpose |
+|-------------|-------------|---------|
+| Tables | `sets`, `themes`, `parts`, `colors`, `inventories`, `inventory_parts`, `minifigs`, `inventory_minifigs` | Cleaned source data |
+| Views | `set_complexity_score`, `ip_dependency_flag`, `figure_density` | Certified business metrics — prefer these over raw columns |
+| Volume | `raw` | Raw CSVs — do not query directly |
 
 ---
 
@@ -69,9 +68,9 @@ Treat them as a separate segment in retirement risk models.
 
 | Metric view | Use instead of |
 |-------------|---------------|
-| `brickvault.metrics.set_complexity_score` | `sets.num_parts` |
-| `brickvault.metrics.ip_dependency_flag` | Manual theme hierarchy traversal |
-| `brickvault.metrics.figure_density` | Raw figure count aggregation |
+| `lucasbruand_catalog.brickvault.set_complexity_score` | `sets.num_parts` |
+| `lucasbruand_catalog.brickvault.ip_dependency_flag` | Manual theme hierarchy traversal |
+| `lucasbruand_catalog.brickvault.figure_density` | Raw figure count aggregation |
 
 ---
 
@@ -86,12 +85,12 @@ SELECT
     ip_flag.ip_dependent,
     cplx.set_complexity_score,
     fd.figure_density
-FROM brickvault.catalog.sets s
-JOIN brickvault.metrics.ip_dependency_flag ip_flag
+FROM lucasbruand_catalog.brickvault.sets s
+JOIN lucasbruand_catalog.brickvault.ip_dependency_flag ip_flag
     ON s.set_num = ip_flag.set_num
-JOIN brickvault.metrics.set_complexity_score cplx
+JOIN lucasbruand_catalog.brickvault.set_complexity_score cplx
     ON s.set_num = cplx.set_num
-JOIN brickvault.metrics.figure_density fd
+JOIN lucasbruand_catalog.brickvault.figure_density fd
     ON s.set_num = fd.set_num
 ```
 

@@ -3,12 +3,12 @@
 # BrickVault — Step 1: Download source data
 # =============================================================================
 # Downloads Rebrickable bulk CSV files, decompresses them, and uploads to a
-# Unity Catalog Volume at /Volumes/brickvault/landing/raw/
+# Unity Catalog Volume at /Volumes/lucasbruand_catalog/brickvault/raw/
 #
 # Prerequisites:
 #   - Databricks CLI v0.200+ installed and configured (databricks auth login)
 #   - curl, gunzip available on PATH
-#   - The brickvault catalog must already exist (created by 02_catalog_setup.py)
+#   - The lucasbruand_catalog catalog must already exist (created by 02_catalog_setup.py)
 #     OR run with --create-volume to let this script create it via CLI
 #
 # Usage:
@@ -19,8 +19,8 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
-CATALOG="brickvault"
-SCHEMA="landing"
+CATALOG="lucasbruand_catalog"
+SCHEMA="brickvault"
 VOLUME="raw"
 VOLUME_PATH="/Volumes/${CATALOG}/${SCHEMA}/${VOLUME}"
 REBRICKABLE_BASE="https://cdn.rebrickable.com/media/downloads"

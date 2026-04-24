@@ -54,14 +54,14 @@ Source: [Rebrickable bulk downloads](https://rebrickable.com/downloads/) (CC lic
 
 | File | Table name | Description |
 |------|-----------|-------------|
-| `sets.csv` | `brickvault.catalog.sets` | All brick sets: set_num, name, year, theme_id, num_parts |
-| `themes.csv` | `brickvault.catalog.themes` | Theme hierarchy: id, name, parent_id |
-| `parts.csv` | `brickvault.catalog.parts` | Brick elements: part_num, name, part_cat_id, part_material |
-| `colors.csv` | `brickvault.catalog.colors` | Color catalog: id, name, rgb, is_trans |
-| `inventories.csv` | `brickvault.catalog.inventories` | Set inventory versions |
-| `inventory_parts.csv` | `brickvault.catalog.inventory_parts` | Parts per inventory: quantities, spare flags |
-| `minifigs.csv` | `brickvault.catalog.minifigs` | Collectible figures: fig_num, name, num_parts |
-| `inventory_minifigs.csv` | `brickvault.catalog.inventory_minifigs` | Figures per inventory |
+| `sets.csv` | `lucasbruand_catalog.brickvault.sets` | All brick sets: set_num, name, year, theme_id, num_parts |
+| `themes.csv` | `lucasbruand_catalog.brickvault.themes` | Theme hierarchy: id, name, parent_id |
+| `parts.csv` | `lucasbruand_catalog.brickvault.parts` | Brick elements: part_num, name, part_cat_id, part_material |
+| `colors.csv` | `lucasbruand_catalog.brickvault.colors` | Color catalog: id, name, rgb, is_trans |
+| `inventories.csv` | `lucasbruand_catalog.brickvault.inventories` | Set inventory versions |
+| `inventory_parts.csv` | `lucasbruand_catalog.brickvault.inventory_parts` | Parts per inventory: quantities, spare flags |
+| `minifigs.csv` | `lucasbruand_catalog.brickvault.minifigs` | Collectible figures: fig_num, name, num_parts |
+| `inventory_minifigs.csv` | `lucasbruand_catalog.brickvault.inventory_minifigs` | Figures per inventory |
 
 ---
 
@@ -71,20 +71,20 @@ This is the heart of the demo. Every table and key column must carry rich metada
 
 ### Table-level descriptions (examples)
 
-**`brickvault.catalog.sets`**
+**`lucasbruand_catalog.brickvault.sets`**
 > "Master catalog of all brick sets ever produced. Each row is one set version. Use `year` + `theme_id` together to assess demand context — sets from licensed IP themes behave very differently from original themes in terms of retirement timing. Primary key: `set_num`."
 
-**`brickvault.catalog.themes`**
+**`lucasbruand_catalog.brickvault.themes`**
 > "Hierarchical theme taxonomy. Parent-child relationships model the full IP tree (e.g., 'Star-themed' → 'Galactic Saga' → 'Galactic Saga Episode IV'). Licensed themes (those with a non-null `parent_id` tracing to a licensed root) show 30% faster average retirement than original themes. Join to `sets` on `theme_id`."
 
-**`brickvault.catalog.inventory_parts`**
+**`lucasbruand_catalog.brickvault.inventory_parts`**
 > "Part-level breakdown of each set inventory. Use to compute set complexity metrics. `is_spare` = true rows should be excluded from complexity calculations. Lineage: sourced from BrickVault supplier feed, refreshed weekly."
 
 ### Column-level descriptions (examples)
 
 | Table | Column | Description |
 |-------|--------|-------------|
-| `sets` | `num_parts` | Raw part count including spares. For complexity scoring use `brickvault.metrics.set_complexity_score` instead, which excludes spares and normalises by theme average. |
+| `sets` | `num_parts` | Raw part count including spares. For complexity scoring use `lucasbruand_catalog.brickvault.set_complexity_score` instead, which excludes spares and normalises by theme average. |
 | `sets` | `year` | Release year. Sets older than 3 years with no inventory update are candidates for retirement scoring. |
 | `themes` | `parent_id` | Null = root/original theme. Non-null and tracing to a licensed root = IP-dependent theme, higher demand volatility. |
 | `colors` | `is_trans` | Transparent elements. High transparent-part ratio correlates with premium/exclusive sets — retirement risk differs from standard sets. |
@@ -114,12 +114,12 @@ This is the heart of the demo. Every table and key column must carry rich metada
 [DLT Transformation Pipeline]     ← Silver layer (cleaned, typed, linked)
         │
         ▼
-[Unity Catalog: brickvault.catalog.*]   ← With full semantic metadata
+[Unity Catalog: lucasbruand_catalog.brickvault.*]   ← With full semantic metadata
         │
         ├──► [Feature Engineering Notebook]   ← computes certified metrics
         │              │
         │              ▼
-        │    [brickvault.features.set_retirement_features]
+        │    [lucasbruand_catalog.brickvault.set_retirement_features]
         │              │
         │              ▼
         │    [ML Training — MLflow]           ← retirement risk classifier
@@ -145,7 +145,7 @@ This is the heart of the demo. Every table and key column must carry rich metada
 
 **What to show before typing:**
 - Open a fresh Genie Code conversation in the `brickvault` catalog context
-- Scroll slowly past the Unity Catalog browser so the audience sees `brickvault.catalog.*` tables listed — 5 seconds, no clicking
+- Scroll slowly past the Unity Catalog browser so the audience sees `lucasbruand_catalog.brickvault.*` tables listed — 5 seconds, no clicking
 
 **Prompt to type (slowly, readable):**
 ```
@@ -154,7 +154,7 @@ and which sets should we be paying attention to?
 ```
 
 **What the recording must show Genie Code doing:**
-1. Reading `brickvault.catalog.sets`, `brickvault.catalog.themes` — tool calls visible in the sidebar
+1. Reading `lucasbruand_catalog.brickvault.sets`, `lucasbruand_catalog.brickvault.themes` — tool calls visible in the sidebar
 2. Navigating the theme hierarchy to identify licensed vs. original themes
 3. Generating a notebook with: sets per year bar chart, theme breakdown, complexity distribution using `set_complexity_score`
 
@@ -194,7 +194,7 @@ in the next 18 months.
 **Proof point A** — the `is_spare` filter in the feature code:
 ```python
 # Exclude spare parts — they inflate part counts and skew complexity metrics
-# (per brickvault.catalog.inventory_parts column description)
+# (per lucasbruand_catalog.brickvault.inventory_parts column description)
 .filter(col("is_spare") == False)
 ```
 Say: *"We never mentioned spare parts in the prompt."*

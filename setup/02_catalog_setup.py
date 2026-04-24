@@ -2,8 +2,8 @@
 # =============================================================================
 # BrickVault — Step 2: Catalog setup
 # =============================================================================
-# Creates the brickvault catalog, schemas, and Delta tables from the CSV files
-# uploaded by 01_download_data.sh.
+# Creates the brickvault schema inside lucasbruand_catalog, plus a Volume for
+# raw CSVs and Delta tables loaded from the files uploaded by 01_download_data.sh
 #
 # Run order: after 01_download_data.sh, before 03_semantic_metadata.py
 # Cluster: any cluster with Unity Catalog enabled
@@ -13,28 +13,25 @@
 
 # MAGIC %md
 # MAGIC ## BrickVault — Step 2: Catalog Setup
-# MAGIC Creates catalog, schemas, volume, and Delta tables from Rebrickable source CSVs.
+# MAGIC Creates the `brickvault` schema in `lucasbruand_catalog`, a Volume for
+# MAGIC raw CSV files, and Delta tables for all Rebrickable source data.
 
 # COMMAND ----------
 
-CATALOG      = "brickvault"
-LANDING_VOL  = f"/Volumes/{CATALOG}/landing/raw"
+CATALOG     = "lucasbruand_catalog"
+SCHEMA      = "brickvault"
+LANDING_VOL = f"/Volumes/{CATALOG}/{SCHEMA}/raw"
 
 # COMMAND ----------
 
-# MAGIC %md ### 1 — Catalog and schemas
+# MAGIC %md ### 1 — Schema and Volume
 
 # COMMAND ----------
 
-spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
-spark.sql(f"USE CATALOG {CATALOG}")
-spark.sql("CREATE SCHEMA IF NOT EXISTS landing")   # raw CSV volume lives here
-spark.sql("CREATE SCHEMA IF NOT EXISTS catalog")   # cleaned Delta tables
-spark.sql("CREATE SCHEMA IF NOT EXISTS features")  # feature tables for ML
-spark.sql("CREATE SCHEMA IF NOT EXISTS metrics")   # certified metric views
-spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.landing.raw")
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA}")
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA}.raw")
 
-print("Catalog and schemas ready.")
+print(f"Schema {CATALOG}.{SCHEMA} and Volume raw ready.")
 
 # COMMAND ----------
 
@@ -72,9 +69,9 @@ def read_csv(name: str) -> DataFrame:
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.sets")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.sets")
 )
-print("catalog.sets written.")
+print("sets written.")
 
 # COMMAND ----------
 
@@ -92,9 +89,9 @@ print("catalog.sets written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.themes")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.themes")
 )
-print("catalog.themes written.")
+print("themes written.")
 
 # COMMAND ----------
 
@@ -113,9 +110,9 @@ print("catalog.themes written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.parts")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.parts")
 )
-print("catalog.parts written.")
+print("parts written.")
 
 # COMMAND ----------
 
@@ -135,9 +132,9 @@ print("catalog.parts written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.colors")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.colors")
 )
-print("catalog.colors written.")
+print("colors written.")
 
 # COMMAND ----------
 
@@ -155,9 +152,9 @@ print("catalog.colors written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.inventories")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.inventories")
 )
-print("catalog.inventories written.")
+print("inventories written.")
 
 # COMMAND ----------
 
@@ -178,9 +175,9 @@ print("catalog.inventories written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.inventory_parts")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.inventory_parts")
 )
-print("catalog.inventory_parts written.")
+print("inventory_parts written.")
 
 # COMMAND ----------
 
@@ -198,9 +195,9 @@ print("catalog.inventory_parts written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.minifigs")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.minifigs")
 )
-print("catalog.minifigs written.")
+print("minifigs written.")
 
 # COMMAND ----------
 
@@ -218,9 +215,9 @@ print("catalog.minifigs written.")
     .write.format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable(f"{CATALOG}.catalog.inventory_minifigs")
+    .saveAsTable(f"{CATALOG}.{SCHEMA}.inventory_minifigs")
 )
-print("catalog.inventory_minifigs written.")
+print("inventory_minifigs written.")
 
 # COMMAND ----------
 
@@ -228,10 +225,10 @@ print("catalog.inventory_minifigs written.")
 
 # COMMAND ----------
 
-tables = spark.sql(f"SHOW TABLES IN {CATALOG}.catalog").collect()
-print(f"{len(tables)} tables in {CATALOG}.catalog:")
+tables = spark.sql(f"SHOW TABLES IN {CATALOG}.{SCHEMA}").collect()
+print(f"{len(tables)} tables in {CATALOG}.{SCHEMA}:")
 for t in tables:
-    count = spark.table(f"{CATALOG}.catalog.{t.tableName}").count()
+    count = spark.table(f"{CATALOG}.{SCHEMA}.{t.tableName}").count()
     print(f"  {t.tableName:30s}  {count:>10,} rows")
 
 # COMMAND ----------

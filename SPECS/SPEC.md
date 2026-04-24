@@ -7,6 +7,17 @@
 **Dataset:** Public toy construction brick catalog data ([Rebrickable](https://rebrickable.com/downloads/)), rebranded as "BrickVault" — a fictional company that catalogs and tracks the toy construction brick market.  
 **Tone:** Semi-serious. Enterprise-grade tooling applied to brick sets. The joke is implicit; the engineering is real.
 
+## Timing
+
+| Segment | Duration |
+|---------|----------|
+| Demo (3 prompts, pre-run results) | 10 min |
+| Recap | 3 min |
+| Q&A | 2 min |
+| **Total** | **15 min** |
+
+**Rule:** everything that takes more than 60 seconds to execute is **pre-run**. During the demo we type prompts and show results, we do not wait for pipelines or training jobs.
+
 ---
 
 ## Core Thesis
@@ -120,82 +131,112 @@ This is the heart of the demo. Every table and key column must carry rich metada
 
 ## Demo Acts
 
-### Act 1 — Discovery (5 min)
-**Capability:** EDA + semantic catalog navigation  
-**The ask to Genie Code:** *"I've just joined BrickVault. What does our brick catalog look like, and which sets should we be watching?"*
-
-What Genie Code does autonomously:
-- Navigates Unity Catalog, finds `brickvault.catalog.*` tables
-- Reads table descriptions to understand relationships without being told schema
-- Identifies the `themes` hierarchy and the licensed IP flag
-- Produces a summary EDA notebook with charts: sets per year, theme distribution, part count distribution
-- Calls out that `num_parts` should not be used raw — it spots the column description warning and uses `set_complexity_score` instead
-
-**Key semantic moment:** Genie Code uses `set_complexity_score` (the certified metric) rather than raw `num_parts`, *because the column description explicitly says so*. A generic agent would have used `num_parts`.
+> 3 prompts. 10 minutes total. Each prompt has one visible semantic proof point.
+> The DLT pipeline and ML training are **pre-run** — we show results, not execution.
 
 ---
 
-### Act 2 — Build (10 min)
-**Capability:** DLT pipeline + ML model (end-to-end Data+AI)  
-**The ask to Genie Code:** *"Build a retirement risk prediction pipeline for our set catalog."*
+### Prompt 1 — "What do we have?" (3 min)
+**Capability:** Semantic catalog navigation + EDA  
+**Live or pre-run:** Live (fast — just catalog reads and a few queries)  
+**The ask:** *"I've just joined BrickVault. What does our brick catalog look like, and which sets should we be paying attention to?"*
 
-What Genie Code does autonomously:
-- Creates a DLT pipeline (Bronze → Silver) for the Rebrickable source tables
-- Engineers features using the catalog metric definitions (`ip_dependency_flag`, `figure_density`, `secondary_market_premium`)
-- Excludes `is_spare = true` parts from all calculations because the column metadata says so
-- Trains a binary classifier (retired in next 18 months) in MLflow
-- Registers and serves the model via a Model Serving endpoint
-- Logs the feature importance back to the catalog as a column tag
+What Genie Code does:
+- Finds `brickvault.catalog.*` from Unity Catalog — no table names given in the prompt
+- Reads the theme hierarchy, identifies licensed vs. original themes from descriptions
+- Produces a quick profile: sets per year, theme breakdown, complexity distribution
+- Uses `set_complexity_score` instead of raw `num_parts`
 
-**Key semantic moment:** Genie Code excludes `is_spare` parts and applies the licensed-IP retirement uplift — both decisions driven solely by the catalog metadata, not by explicit user instructions.
+**Semantic proof point:** It uses `set_complexity_score`, not `num_parts`. When asked why, it quotes the column description back verbatim. A generic agent would have used `num_parts`.
+
+**Talking point while it runs:** *"Notice we gave it zero schema information. It found the catalog, read the metadata, and made a modeling decision we didn't ask for."*
 
 ---
 
-### Act 3 — Scale (5 min)
-**Capability:** Skills + monitoring + background agent  
-**The ask to Genie Code:** *"Make sure this platform stays up to date when new sets are released, and package your knowledge for the next analyst."*
+### Prompt 2 — "Build the risk model" (5 min)
+**Capability:** Feature engineering + ML (Data+AI bridge)  
+**Live or pre-run:** Prompt is live; pipeline + training results are **pre-run**, shown as already-executed output  
+**The ask:** *"Build a retirement risk prediction model for our set catalog. I want to know which sets are most at risk in the next 18 months."*
 
-What Genie Code does autonomously:
-- Creates a monitoring notebook that re-triggers the retirement scoring pipeline when `catalog.sets` is updated
-- Writes and registers a **BrickVault Analyst Skill** so any future user can ask questions in the context of BrickVault's domain model
-- The skill includes: table relationship guidance, metric definitions, known data quality caveats (the `is_spare` flag, the licensed IP hierarchy logic)
+What Genie Code does:
+- Writes the feature engineering logic using `ip_dependency_flag`, `figure_density`, `set_complexity_score`
+- Excludes `is_spare = true` parts without being told — from the column metadata
+- Trains a classifier, logs it in MLflow, shows feature importance
+- `ip_dependency_flag` appears in the top 3 features
 
-**Key semantic moment:** The skill it generates *includes the same semantic caveats* it learned from the catalog metadata. The next analyst inherits the knowledge without reading any documentation.
+**Semantic proof point:** The `is_spare` exclusion appears in the generated code unprompted. Point at it explicitly: *"We never mentioned spare parts. It read the column description."*  
+Second moment: `ip_dependency_flag` in feature importance. *"It knew licensed themes retire faster because the theme table description said so."*
+
+**Talking point while showing results:** *"This is the Data+AI bridge. The same semantic layer that governs the data pipeline also shapes the ML model. One source of truth."*
+
+---
+
+### Prompt 3 — "Now make it last" (2 min)
+**Capability:** Skill generation  
+**Live or pre-run:** Live (fast — text output only)  
+**The ask:** *"Package everything you've learned about our data model into a skill so the next analyst on the team can hit the ground running."*
+
+What Genie Code does:
+- Generates a `brickvault_analyst_skill.md` skill file
+- The skill body reproduces the semantic caveats from the catalog: the `is_spare` warning, the licensed IP retirement uplift, the `set_complexity_score` definition
+- The next user inherits domain knowledge without reading a single doc
+
+**Semantic proof point:** The skill output uses the *exact language* from the table/column descriptions — it didn't invent it. The catalog metadata became institutional knowledge.
+
+**Talking point:** *"This is the compounding effect. Every time someone runs Genie Code on your catalog, the domain knowledge gets packaged and transferred. Your documentation writes itself."*
 
 ---
 
 ## Files to Build
 
+Priority order matches the demo flow. Items marked **[pre-run]** must be ready and executed before the demo starts.
+
 ```
 genie-code-for-dataeng-demo/
 ├── SPECS/
 │   └── SPEC.md                        ← this file
-├── setup/
-│   ├── 01_download_data.sh            ← downloads Rebrickable CSVs
-│   ├── 02_catalog_setup.py            ← creates catalog, schemas, uploads to volumes
-│   └── 03_semantic_metadata.py        ← applies all table/column descriptions + metric definitions
-├── pipelines/
-│   └── dlt_brickvault_pipeline.py     ← DLT Bronze→Silver pipeline
-├── notebooks/
-│   ├── 01_eda.py                      ← EDA notebook (Act 1 starting point)
-│   ├── 02_feature_engineering.py      ← builds the feature table (Act 2)
-│   └── 03_ml_training.py              ← MLflow training + registration (Act 2)
-├── serving/
-│   └── 04_model_serving.py            ← endpoint creation + test query
-├── monitoring/
-│   └── 05_pipeline_monitor.py         ← re-trigger logic (Act 3)
+│
+├── setup/                             ← run once before the demo
+│   ├── 01_download_data.sh            ← downloads Rebrickable CSVs to DBFS/Volume
+│   ├── 02_catalog_setup.py            ← creates catalog brickvault + schemas
+│   └── 03_semantic_metadata.py        ← applies all table/column descriptions + metric definitions  ⬅ most important file
+│
+├── pipelines/                         ← [pre-run]
+│   └── dlt_brickvault_pipeline.py     ← DLT Bronze→Silver pipeline (shown as already run in Prompt 2)
+│
+├── notebooks/                         ← [pre-run] except Prompt 1 which runs live
+│   ├── 02_feature_engineering.py      ← builds brickvault.features.set_retirement_features [pre-run]
+│   └── 03_ml_training.py              ← MLflow training + registration [pre-run]
+│
 └── skills/
-    └── brickvault_analyst_skill.md    ← Genie Code skill definition (Act 3)
+    └── brickvault_analyst_skill.md    ← expected output of Prompt 3 (Genie Code generates this live)
 ```
+
+**Dropped from scope:**
+- `serving/` — model serving endpoint adds 2+ min of setup, not needed to make the point
+- `monitoring/` — cut for time; mention verbally as "what comes next"
+- `notebooks/01_eda.py` — Prompt 1 runs live, no starter notebook needed
 
 ---
 
 ## Key Demo Principles
 
-1. **Never tell Genie Code the table names** in Acts 1 and 2. It should find them from the catalog.
+1. **Never tell Genie Code the table names** in Prompts 1 and 2. It should find them from the catalog.
 2. **The `is_spare` exclusion** must visibly appear in generated code — it's the clearest proof of semantic understanding.
 3. **The licensed IP uplift** should appear in the model's feature importance — Genie Code picked it because the metadata said it mattered.
-4. **The skill output** in Act 3 should quote back language from the table descriptions — proving it learned from the catalog, not from the prompt.
+4. **The skill output** in Prompt 3 should quote back language from the table descriptions — proving it learned from the catalog, not from the prompt.
+
+---
+
+## Recap Script (3 min)
+
+Three points, one sentence each:
+
+1. **Semantics over syntax** — "We never told it which tables to use or which columns to trust. It read the catalog."
+2. **Data+AI in one loop** — "The same metadata that governs the pipeline shaped the ML model. One source of truth for both."
+3. **Knowledge compounds** — "The skill it generated will give the next analyst a head start. Your catalog becomes self-documenting."
+
+Closing line: *"Every other coding agent writes code. Genie Code understands your data."*
 
 ---
 
@@ -204,3 +245,4 @@ genie-code-for-dataeng-demo/
 - Real-time streaming (keeps the demo focused)
 - Actual Rebrickable API calls (bulk CSV download is sufficient)
 - Any brand names for specific brick set themes or figures
+- Model serving endpoint (cut for time — mention verbally)

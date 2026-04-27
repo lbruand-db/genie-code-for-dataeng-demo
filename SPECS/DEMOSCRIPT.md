@@ -69,9 +69,18 @@ and which sets should we be paying attention to?
 `[SAY]`
 > "Stop here. It used `set_complexity_score` — not `num_parts`. We never mentioned that metric. It read the column description on `num_parts`, which says: *'RAW count including spare parts — do not use directly. Use set_complexity_score instead.'* A generic coding agent would have used `num_parts`. Genie Code read the catalog and made the right call."
 
-`[SCREEN]` Continue streaming. Let Genie Code produce the summary EDA: a sets-per-year chart, a theme breakdown, a complexity distribution. Show the rendered output — charts visible.
+`[SCREEN]` Continue streaming. Genie Code produces the EDA notebook. Then send a follow-up prompt to get the charts explicitly:
 
-`[CUT]` Skip notebook execution waiting. Cut directly to the rendered chart output.
+```
+Now show me three charts:
+1. Number of sets released per year
+2. Distribution of sets by theme type (licensed IP vs original)
+3. Distribution of set_complexity_score across the catalog
+```
+
+`[SCREEN]` Genie Code runs the notebook cells. Let the three charts render in sequence.
+
+`[CUT]` Skip notebook execution waiting. Cut directly to the rendered chart output — all three charts visible.
 
 `[SAY]`
 > "One business question. No schema guidance. It found the data, chose the right metric, and produced a coherent analysis."

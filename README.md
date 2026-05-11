@@ -38,8 +38,8 @@ npm run dev   # http://localhost:5173
 ├── skills/
 │   └── brickvault_analyst_skill.md            # Reference for the Segment 3 skill output
 ├── public/
-│   ├── recording_jupyterlite.json             # The rrweb replay (2x-accelerated, ~8:18 long)
-│   └── recording_jupyterlite.annotations.md   # Timestamps, autopause cues, driver.js popovers
+│   ├── bricksight_demo.json                   # The rrweb replay (2x-accelerated, ~8:18 long)
+│   └── bricksight_demo.annotations.md         # Timestamps, autopause cues, driver.js popovers
 ├── src/
 │   ├── App.jsx                                # Loads the recording + annotations into RrwebPlayer
 │   ├── main.jsx                               # React entry point

@@ -1,44 +1,62 @@
-# Rehearseur Template
+# BrickSight — Genie Code for Data Engineers Demo
 
-A React template for creating interactive playback experiences from [rrweb](https://github.com/rrweb-io/rrweb) recordings with annotation overlays and table of contents navigation.
+An interactive, browser-based replay of a Databricks Genie Code session that builds an end-to-end Data + AI workflow on top of Unity Catalog semantics — no schema hints, no table names, just business questions.
 
-## Quick Start
+## What this demo shows
 
-Record your web sessions using the [rrweb Chrome extension](https://github.com/rrweb-io/rrweb/tree/master/packages/web-extension), then use this template to create an annotated, navigable playback experience.
+The premise: **BrickSight** is a fictional market intelligence company for the toy construction-brick industry. Their data lives in Unity Catalog (`lucasbruand_catalog.brickvault`) with rich table descriptions, column comments, and certified metric views. The demo proves that Genie Code reads that semantic layer and uses it to make the right modeling choices.
+
+Three prompts, one continuous conversation:
+
+1. **"What do we have?"** — Genie Code explores the catalog on its own, picks `set_complexity_score` over `num_parts` (because the column comment says so), and produces an EDA notebook with three charts.
+2. **"Build the retirement risk model."** — Without being told, it filters out `is_spare` parts and selects `ip_dependency_flag` as a feature — both decisions driven by Unity Catalog metadata. Trains a model, logs to MLflow, validates feature importance.
+3. **"Package what you've learned."** — Generates a skill file that echoes the catalog's descriptions verbatim, so the next analyst gets the institutional knowledge for free.
+
+**Audience:** data engineers (originally prepared for Capgemini). **Runtime:** ~8 min replay + live voiceover. **Target message:** "Every other coding agent writes code. Genie Code understands your data."
+
+## How the replay works
+
+The recorded Databricks session is stored as an [rrweb](https://github.com/rrweb-io/rrweb) event log and played back in the browser by the [rehearseur](https://github.com/lbruand/rehearseur) React component. A markdown annotations file pins voiceover cues and [driver.js](https://driverjs.com/) popovers to specific timestamps in the replay — autopause stops the replay at each ★ proof point so the presenter can talk over it.
+
+## Quick start
 
 ```bash
 npm install
-npm run dev
+npm run dev   # http://localhost:5173
 ```
 
-## Repository Structure
+## Key files
 
 ```
-rehearseur-template/
-├── index.html                  # Main HTML entry point
-├── package.json                # Project dependencies and scripts
-├── vite.config.js             # Vite build configuration
-│
+├── SPECS/
+│   ├── SPEC.md                                # Demo design spec
+│   └── DEMOSCRIPT.md                          # Full voiceover + screen directions (segment-by-segment)
+├── setup/
+│   ├── 01_download_data.sh                    # Pull Rebrickable seed data
+│   ├── 02_catalog_setup.py                    # Build lucasbruand_catalog.brickvault
+│   └── 03_semantic_metadata.py                # Add the table/column comments Genie Code reads
+├── skills/
+│   └── brickvault_analyst_skill.md            # Reference for the Segment 3 skill output
+├── public/
+│   ├── recording_jupyterlite.json             # The rrweb replay (2x-accelerated, ~8:18 long)
+│   └── recording_jupyterlite.annotations.md   # Timestamps, autopause cues, driver.js popovers
 ├── src/
-│   ├── main.jsx               # React app entry point with global CSS import
-│   ├── App.jsx                # Main app component with RrwebPlayer
-│   └── index.css              # Global styles for full-screen layout
-│
-└── public/
-    ├── recording_jupyterlite.json           # rrweb session recording (JSON)
-    └── recording_jupyterlite.annotations.md # Markdown annotations with timestamps
+│   ├── App.jsx                                # Loads the recording + annotations into RrwebPlayer
+│   ├── main.jsx                               # React entry point
+│   └── index.css                              # Full-screen layout
+├── CLAUDE.md                                  # LLM guide for editing rrweb recordings (used by Claude Code)
+├── index.html
+├── package.json
+└── vite.config.js
 ```
 
-### File Descriptions
+The annotation file is plain markdown — open it to see how each [SAY] beat from `SPECS/DEMOSCRIPT.md` maps to a real timestamp in the recording.
 
-- **`index.html`** - Base HTML template with root div for React mounting
-- **`package.json`** - Defines dependencies including React 19, rehearseur library, and Vite
-- **`vite.config.js`** - Vite configuration with React plugin
-- **`src/main.jsx`** - Renders the App component and imports global styles
-- **`src/App.jsx`** - RrwebPlayer component with recording and annotations URLs
-- **`src/index.css`** - Full-screen layout styles (removes margins, sets 100% height)
-- **`public/recording_jupyterlite.json`** - The rrweb recording file (array of DOM events)
-- **`public/recording_jupyterlite.annotations.md`** - Markdown file with bookmarks, timestamps, and descriptions
+## Template origin
+
+This project is built on the [rehearseur-template](https://github.com/lbruand/rehearseur) scaffold. The sections below come from that template and document how to record, modify, and annotate your own rrweb sessions — useful if you want to fork this demo or build a new one.
+
+---
 
 ## Creating Annotations with an LLM
 

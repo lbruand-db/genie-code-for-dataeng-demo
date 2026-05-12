@@ -2,6 +2,8 @@
 
 An interactive, browser-based replay of a Databricks Genie Code session that builds an end-to-end Data + AI workflow on top of Unity Catalog semantics — no schema hints, no table names, just business questions.
 
+▶ **Live demo:** https://lbruand-db.github.io/genie-code-for-dataeng-demo/
+
 ## What this demo shows
 
 The premise: **BrickSight** is a fictional market intelligence company for the toy construction-brick industry. Their data lives in Unity Catalog (`lucasbruand_catalog.brickvault`) with rich table descriptions, column comments, and certified metric views. The demo proves that Genie Code reads that semantic layer and uses it to make the right modeling choices.

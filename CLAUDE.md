@@ -1,6 +1,25 @@
-# Guide for LLMs: Working with rrweb Recording Files
+# Project context for LLMs
 
-This document provides detailed information about rrweb recording JSON files and how to modify them programmatically.
+This repo is the **BrickSight — Genie Code for Data Engineers** demo. It plays back a recorded Databricks Genie Code session in the browser via the [rehearseur](https://github.com/lbruand/rehearseur) React component, with a markdown annotations file driving voiceover cues and driver.js popovers.
+
+Live site: https://lbruand-db.github.io/genie-code-for-dataeng-demo/ (built and deployed by `.github/workflows/deploy.yml` on every push to `main`).
+
+## Key files
+
+- `public/bricksight_demo.json` — the rrweb event log (22 MB, ~10k events, 8:18 long after a 2× acceleration). Top-level shape is `{ session, events: [...] }` — when you parse it, the events array is at `data["events"]`, not the root.
+- `public/bricksight_demo.annotations.md` — voiceover beats, autopause cues, and `driverjs` popover code blocks pinned to real timestamps in the recording.
+- `SPECS/DEMOSCRIPT.md` — the live voiceover script, segment by segment. Source of truth for what the presenter says at each ★ proof point.
+- `SPECS/SPEC.md` — overall demo design.
+- `src/App.jsx` — loads the two files above into `RrwebPlayer`.
+- `setup/` — Unity Catalog seed scripts (data download, catalog/schema creation, semantic metadata).
+- `skills/brickvault_analyst_skill.md` — reference output for the Segment 3 skill-file generation.
+
+## Conventions specific to this repo
+
+- **Timestamps in the annotations file are anchored to real signals in the recording**, not proportional estimates. When adding or moving annotations, find the actual on-screen beat by scanning `events[*].timestamp` for the relevant text (prompt strings, column names, etc.) and use the offset from `events[0].timestamp`. See git history of `bricksight_demo.annotations.md` for prior anchor work.
+- **driver.js popovers** are written as fenced ` ```driverjs ` code blocks inside an annotation body. They use `driverObj.highlight({ popover: {...} })` with `align: 'center'` for element-less modals; swap in `element: createPhantom('<selector>')` to anchor to a DOM node.
+- **Filenames** in `src/App.jsx` are relative (no leading `/`) so they work both at local dev `/` and at the GitHub Pages base `/genie-code-for-dataeng-demo/`. The `base` path is set in `vite.config.js` gated on the `GITHUB_PAGES` env var.
+- The recording was 2×-accelerated once already (997s → 499s). Apply further speed changes proportionally and also update annotation timestamps.
 
 ## rrweb Recording JSON Format
 
@@ -91,21 +110,27 @@ Each event has:
 
 ### Incremental Snapshot Sources
 
-The `source` field in Type 3 events indicates what kind of interaction occurred:
+The `source` field in Type 3 events indicates what kind of incremental change occurred. **Important:** this enum has shifted across rrweb versions — the table below matches the recorder version used in this repo (verified against `public/bricksight_demo.json`):
 
-- **0** - MouseMove
-- **1** - MouseInteraction (click, dblclick, mousedown, mouseup, etc.)
-- **2** - Scroll
-- **3** - ViewportResize
-- **4** - Input (text input, checkbox, radio, select)
-- **5** - TouchMove
-- **6** - MediaInteraction
-- **7** - StyleSheetRule
-- **8** - CanvasMutation
-- **9** - Font
-- **10** - Log
-- **11** - Drag
-- **12** - StyleDeclaration
+- **0** - Mutation (DOM adds/removes/attribute/text changes — this is the dominant event in a real recording)
+- **1** - MouseMove
+- **2** - MouseInteraction (click, dblclick, mousedown, mouseup, etc.)
+- **3** - Scroll
+- **4** - ViewportResize
+- **5** - Input (text input, checkbox, radio, select)
+- **6** - TouchMove
+- **7** - MediaInteraction
+- **8** - StyleSheetRule
+- **9** - CanvasMutation
+- **10** - Font
+- **11** - Log
+- **12** - Drag
+- **13** - StyleDeclaration
+- **14** - Selection
+- **15** - AdoptedStyleSheet
+- **16** - CustomElement
+
+When in doubt, dump a handful of events and inspect `data` keys — Mutation events carry `adds`/`removes`/`texts`/`attributes`, Scroll events carry `id`/`x`/`y`, Input events carry `text`/`isChecked`, etc.
 
 ## Modifying rrweb Recordings with LLMs
 
@@ -229,13 +254,13 @@ rrweb recording JSON files can be very large (several MB) and may exceed LLM con
 
 ```bash
 # JSON to TOON
-npx @toon-format/cli public/recording.json -o recording.toon
+npx @toon-format/cli public/bricksight_demo.json -o bricksight_demo.toon
 
 # TOON to JSON
-npx @toon-format/cli recording.toon -o public/recording.json
+npx @toon-format/cli bricksight_demo.toon -o public/bricksight_demo.json
 
 # Pipe to stdin/stdout
-cat recording.toon | npx @toon-format/cli > recording.json
+cat bricksight_demo.toon | npx @toon-format/cli > bricksight_demo.json
 ```
 
 **Workflow:**

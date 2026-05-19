@@ -14,7 +14,7 @@ Three prompts, one continuous conversation:
 2. **"Build the retirement risk model."** — Without being told, it filters out `is_spare` parts and selects `ip_dependency_flag` as a feature — both decisions driven by Unity Catalog metadata. Trains a model, logs to MLflow, validates feature importance.
 3. **"Package what you've learned."** — Generates a skill file that echoes the catalog's descriptions verbatim, so the next analyst gets the institutional knowledge for free.
 
-**Audience:** data engineers (originally prepared for Capgemini). **Runtime:** ~8 min replay + live voiceover. **Target message:** "Every other coding agent writes code. Genie Code understands your data."
+**Audience:** data engineers (first delivered at Capgemini). **Runtime:** ~8 min replay + live voiceover. **Target message:** "Every other coding agent writes code. Genie Code understands your data."
 
 ## How the replay works
 
@@ -46,6 +46,9 @@ npm run dev   # http://localhost:5173
 │   ├── App.jsx                                # Loads the recording + annotations into RrwebPlayer
 │   ├── main.jsx                               # React entry point
 │   └── index.css                              # Full-screen layout
+├── .github/workflows/
+│   └── deploy.yml                             # Build + publish to GitHub Pages on push to main
+├── FIVELINERS.md                              # Short blurbs for sharing the demo internally
 ├── CLAUDE.md                                  # LLM guide for editing rrweb recordings (used by Claude Code)
 ├── index.html
 ├── package.json
@@ -53,6 +56,10 @@ npm run dev   # http://localhost:5173
 ```
 
 The annotation file is plain markdown — open it to see how each [SAY] beat from `SPECS/DEMOSCRIPT.md` maps to a real timestamp in the recording.
+
+## Deployment
+
+Every push to `main` triggers `.github/workflows/deploy.yml`, which runs `npm run build` with `GITHUB_PAGES=true` (so Vite emits the `/genie-code-for-dataeng-demo/` base path) and publishes the `dist/` artifact to GitHub Pages. Enable the Pages source once in **Settings → Pages → Build and deployment → GitHub Actions**.
 
 ## Template origin
 
